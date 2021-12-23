@@ -3,7 +3,7 @@
 paper.install(window);
 
 //make Math.random() predictable
-Math.seedrandom("113235353227");
+Math.seedrandom("123456782");
 const animate = false;
 
 const kHeight = 600;
@@ -16,8 +16,20 @@ let wave = 10;
 
 //scene stage
 let sceneObjects = [];
-let scrollSpeed = 10.0;
+let scrollSpeed = 0.5;
 let randomZ = (margin = 0) => randomInt(0, kStageHeight - margin);
+let toggle = {
+  trees: 1,
+  sky: 1,
+  hills: 1,
+  bush: 1,
+  village: 1,
+  manorHouse: 1,
+  water: 1,
+  field: 1,
+  texture: 1,
+  scroll: 0,
+};
 
 const kUnit = kHeight / 60;
 
@@ -43,76 +55,18 @@ function init() {
   };
   project.currentStyle.strokeColor.lightness = 0.3;
   drawScene();
-  let textureCount = 1;
-  paper.view.onFrame = function () {
-    // Run through the active layer's children list and change
-    // the position of the placed symbols:
-    for (var i = 0; i < project.activeLayer.children.length; i++) {
-      var item = project.activeLayer.children[i];
 
-      // Move the item 1/20th of its width to the right. This way
-      // larger circles move faster than smaller circles:
-
-      // If the item has left the view on the right, move it back
-      // to the left:
-
-      const background = new Set(["Sky", "Hills", "Texture"]);
-      if (background.has(item.name)) {
-        ///background doesn't need to move
-        //TODO: make the texture move (and wrap)
-      } else if (item.name == "Water") {
-        if (item.bounds.left >= 0) {
-          item.insert(
-            0,
-            new Point(-100 * scrollSpeed, highTide + randomFloat(5))
-          );
-        }
-        item.position.x += (item.z / kStageHeight / 2) * scrollSpeed;
-
-        item.segments[item.segments.length - 1].point.x = 0;
-      } else {
-        item.position.x += (item.z / kStageHeight + 1) * scrollSpeed;
-
-        if (item.bounds.left > view.size.width) {
-          if (item.name == "ManorHouse") {
-            item.remove();
-            sceneObjects.push(
-              new ManorHouse(randomInt(-200, -1000), randomZ(15))
-            );
-            layoutScene();
-          } else if (item.name == "ManorHouse") {
-            item.remove();
-            sceneObjects.push(new Village(randomInt(-200, -1000), randomZ(15)));
-            layoutScene();
-          } else {
-            item.position.x = -item.bounds.width;
-          }
-        }
-      }
-    }
-  };
+  paper.view.onFrame = toggle.scroll ? scroll : null;
 
   paper.view.draw();
 }
 
 function drawScene() {
-  let toggle = {
-    trees: 1,
-    sky: 1,
-    hills: 1,
-    bush: 1,
-    village: 1,
-    manorHouse: 1,
-    water: 1,
-    field: 1,
-    texture: 1,
-  };
-
   if (toggle.sky) sky();
   if (toggle.hills) hills();
   if (toggle.trees) {
     for (let x = 0; x <= kWidth; x += 15) {
-      let obj = new Tree(x, randomZ(15));
+      let obj = new Tree2(x, randomZ(15));
       x += randomFloat(0, obj.width / 2);
       sceneObjects.push(obj);
     }
@@ -138,7 +92,7 @@ function drawScene() {
     sceneObjects.push(village);
   }
   if (toggle.manorHouse) {
-    let manorHouse = new ManorHouse(400, randomZ(15));
+    let manorHouse = new ManorHouse(300, randomZ(15));
     sceneObjects.push(manorHouse);
   }
 
@@ -151,9 +105,44 @@ function drawScene() {
     raster.source = "./texture.png";
     raster.name = "Texture";
     raster.opacity = 0.3;
-    raster.onLoad = () => {
-      //raster.fitBounds(view.size);
-    };
+  }
+}
+
+function scroll() {
+  for (var i = 0; i < project.activeLayer.children.length; i++) {
+    var item = project.activeLayer.children[i];
+    const background = new Set(["Sky", "Hills", "Texture"]);
+    if (background.has(item.name)) {
+      ///background doesn't need to move
+    } else if (item.name == "Water") {
+      if (item.bounds.left >= 0) {
+        item.insert(
+          0,
+          new Point(-100 * scrollSpeed, highTide + randomFloat(5))
+        );
+      }
+      item.position.x += (item.z / kStageHeight / 2) * scrollSpeed;
+
+      item.segments[item.segments.length - 1].point.x = 0;
+    } else {
+      item.position.x += (item.z / kStageHeight + 1) * scrollSpeed;
+
+      if (item.bounds.left > view.size.width) {
+        if (item.name == "ManorHouse") {
+          item.remove();
+          sceneObjects.push(
+            new ManorHouse(randomInt(-200, -1000), randomZ(15))
+          );
+          layoutScene();
+        } else if (item.name == "ManorHouse") {
+          item.remove();
+          sceneObjects.push(new Village(randomInt(-200, -1000), randomZ(15)));
+          layoutScene();
+        } else {
+          item.position.x = -item.bounds.width;
+        }
+      }
+    }
   }
 }
 
@@ -293,10 +282,6 @@ class Tree extends SceneObject {
     crown.remove();
     this.item = group;
   }
-
-  get width() {
-    return this.item.bounds.width;
-  }
 }
 
 class Tree2 extends SceneObject {
@@ -345,10 +330,6 @@ class Tree2 extends SceneObject {
     );
 
     this.item = group;
-  }
-
-  get width() {
-    return this.item.bounds.width;
   }
 }
 
