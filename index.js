@@ -3,7 +3,7 @@
 paper.install(window);
 
 //make Math.random() predictable
-//Math.seedrandom("113235353227");
+Math.seedrandom("113235353227");
 const animate = false;
 
 const kHeight = 600;
@@ -57,7 +57,7 @@ function init() {
         //TODO: make the texture move (and wrap)
       } else if (item.name == "Water") {
         if (item.bounds.left >= 0) {
-          item.insert(0, new Point(-60, highTide + random(1.5)));
+          item.insert(0, new Point(-60, highTide + randomFloat(1.5)));
         }
         item.position.x += item.z / kStageHeight / 2;
 
@@ -79,7 +79,7 @@ function init() {
           }
         } else if (item.bounds.left > view.size.width) {
           if (item.name == "ManorHouse" || item.name == "ManorHouse") {
-            item.position.x = -item.bounds.width - random(400, 8000);
+            item.position.x = -item.bounds.width - randomInt(400, 8000);
           } else {
             item.position.x = -item.bounds.width;
           }
@@ -105,7 +105,7 @@ function drawScene() {
   };
 
   let sceneObjects = [];
-  let randomZ = (margin = 0) => random(0, kStageHeight - margin);
+  let randomZ = (margin = 0) => randomInt(0, kStageHeight - margin);
 
   if (toggle.sky) sky();
   if (toggle.hills) hills();
@@ -118,7 +118,7 @@ function drawScene() {
   }
   if (toggle.bush) {
     for (let x = -kWidth / 2; x <= kWidth; x += 15) {
-      let pick = random(0, 100);
+      let pick = randomInt(0, 100);
       let obj = new Bush(x, randomZ());
       x += randomFloat(0, obj.width);
       sceneObjects.push(obj);
@@ -126,7 +126,7 @@ function drawScene() {
   }
   if (toggle.field) {
     for (let x = -kWidth / 2; x <= kWidth; x += 15) {
-      let pick = random(0, 100);
+      let pick = randomInt(0, 100);
       let obj = new Field(x, randomZ());
       x += randomFloat(0, obj.width / 2);
       sceneObjects.push(obj);
@@ -188,7 +188,7 @@ function sky() {
 function hills() {
   let path = new Path.Rectangle({
     point: [0, kStageTop],
-    size: [kWidth, kStageHeight],
+    size: [kWidth, kStageHeight + 10],
     fillColor: hillColor,
   });
   path.name = "Hills";
@@ -196,12 +196,12 @@ function hills() {
 
 function water() {
   let left = new Segment({
-    point: [0, highTide + random(wave)],
+    point: [0, highTide + randomInt(wave)],
     handleOut: [20, -20],
   });
 
   let right = new Segment({
-    point: [kWidth, highTide + random(wave)],
+    point: [kWidth, highTide + randomInt(wave)],
     handleIn: [20, -20],
   });
 
@@ -210,7 +210,7 @@ function water() {
   splitPath(shore, 20);
 
   for (const segment of shore.segments) {
-    segment.point.y += random(-1, 1);
+    segment.point.y += randomFloat(-1, 1);
   }
 
   shore.lineTo(kWidth, kHeight);
@@ -252,7 +252,7 @@ class SceneObject {
   }
 }
 
-class Tree extends SceneObject {
+class Tree2 extends SceneObject {
   constructor(x, z) {
     super(x, z);
     this.item = new Group();
@@ -280,7 +280,7 @@ class Tree extends SceneObject {
       })
     );
 
-    for (let i = 0; i < random(3, 5); i++) {
+    for (let i = 0; i < randomInt(3, 5); i++) {
       let f = folliage[0].clone();
       f.translate(new Point({ length: u * 3, angle: Math.random() * 360 }));
       f.scale(randomFloat(0.5, 0.7));
@@ -302,27 +302,80 @@ class Tree extends SceneObject {
   }
 }
 
+class Tree extends SceneObject {
+  constructor(x, z) {
+    super(x, z);
+    this.item = new Group();
+    let u = this.u;
+    let y = this.y;
+    let leafColor = new Color(treeColors.random());
+    leafColor.lightness = (z / kStageHeight) * 0.3 + 0.4;
+    let group = new Group();
+
+    let trunk = new Path.Rectangle({
+      point: [x, y],
+      size: [u, -u * 3],
+      fillColor: "#fcab8e",
+    });
+
+    trunk.shear([randomFloat(0.05), 0]);
+
+    group.addChild(trunk);
+
+    let folliage = new Path.RegularPolygon({
+      center: new Point(x, y - u * 6),
+      sides: randomInt(5, 8),
+      radius: u * 5,
+    });
+
+    let folliage2 = new Path.Circle({
+      center: new Point(x, y - u * 6),
+      //sides: randomInt(5, 8),
+      radius: u * 5,
+    });
+
+    //splitPath(folliage,7,0.3)
+    folliage.fillColor = leafColor;
+    folliage.smooth();
+    bendHandles(folliage, { min: 30, max: 60 }, { min: 1, max: 1.7 });
+
+    group.addChild(folliage);
+    group.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
+    group.skew(
+      randomFloat(5),
+      randomFloat(5),
+      new Point(group.bounds.center.x, group.bounds.bottom)
+    );
+
+    this.item = group;
+  }
+
+  get width() {
+    return this.item.bounds.width;
+  }
+}
+
 class Village extends SceneObject {
   constructor(x, z) {
     super(x, z);
     let u = this.u;
     let y = this.y;
     let width = kWidth / 4;
-    let numBuildings = random(5, 10);
+    let numBuildings = randomInt(5, 10);
     let group = new Group();
 
     for (let leftCorner = 0, i = 0; i < numBuildings; i++) {
       let houseSettings = { houseColor };
-      houseSettings.wallWidth = random(4, 7) * 1.5 * u;
+      houseSettings.wallWidth = randomFloat(4, 7) * 1.5 * u;
       houseSettings.wallHeight = (2 / 3) * houseSettings.wallWidth;
       houseSettings.houseColor = houseColor;
       houseSettings.roofColor = roofColors.random();
-      houseSettings.windows = random(0, 1);
-      houseSettings.chimneys = random(0, 1);
+      houseSettings.windows = randomInt(0, 1);
+      houseSettings.chimneys = randomInt(0, 1);
       houseSettings.u = u;
       let b = this.house(x + leftCorner, y, houseSettings);
 
-      if (random(0, 1)) {
+      if (randomInt(0, 1)) {
         b.scale(-1, 1);
       }
       group.addChild(b);
@@ -387,20 +440,20 @@ class Field extends SceneObject {
     let u = this.u;
 
     //start with a curve
-    let width = random(50, 100) * u;
+    let width = randomInt(50, 100) * u;
     let path = new Path();
     path.add(x, y);
     path.curveBy([width / 2, -0.5 * u], [width, 0]);
     path.fillColor = grassColor;
 
     // add points across the length of the curve
-    splitPath(path, random(2, 4), 0.3);
+    splitPath(path, randomInt(2, 7), 0.3);
 
     //bend the handles of each segment to make the bush
     for (const segment of path.segments) {
       if (segment.index < path.segments.length) {
-        segment.handleIn.angle += random(5, 15);
-        segment.handleOut.angle -= random(5, 15);
+        segment.handleIn.angle += randomInt(5, 15);
+        segment.handleOut.angle -= randomInt(5, 15);
       }
     }
     path.closePath();
@@ -418,20 +471,20 @@ class Bush extends SceneObject {
     let u = this.u;
 
     //start with a curve
-    let width = random(10, 20) * u;
+    let width = randomFloat(10, 20) * u;
     let path = new Path();
     path.add(x, y);
     path.curveBy([width / 2, -2.5 * u], [width, 0]);
     path.fillColor = bushColors.random();
 
     // add points across the length of the curve
-    splitPath(path, random(4, 6), 0.3);
+    splitPath(path, randomInt(4, 6), 0.3);
 
     //bend the handles of each segment to make the bush
     for (const segment of path.segments) {
       if (segment.index < path.segments.length) {
-        segment.handleIn.angle += random(50, 70);
-        segment.handleOut.angle -= random(50, 70);
+        segment.handleIn.angle += randomInt(50, 70);
+        segment.handleOut.angle -= randomInt(50, 70);
       }
     }
     path.closePath();
@@ -564,19 +617,19 @@ function wobble(apath, pdelta) {
   for (i = 0; i < segments.length; i++) {
     segments[i].point =
       segments[i].point +
-      new Point({ length: pdelta, angle: Math.random() * 360 });
+      new Point({ length: pdelta, angle: Math.randomFloat() * 360 });
   }
 }
 
 function randomFloat(min, max = -min) {
   return Math.random() * (max - min) + min;
 }
-function random(min, max = -min) {
+function randomInt(min, max = -min) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 Array.prototype.random = function () {
-  return this[random(0, this.length - 1)];
+  return this[randomInt(0, this.length - 1)];
 };
 
 function lerp(v0, v1, t) {
@@ -598,5 +651,18 @@ function splitPath(path, numCurves, rand = 0) {
     }
 
     path.lastCurve.divideAt(curveLength * warp);
+  }
+}
+
+function bendHandles(
+  path,
+  angle = { min: 0, max: 0 },
+  scale = { min: 1, max: 1 }
+) {
+  for (const segment of path.segments) {
+    segment.handleIn.angle += randomFloat(angle.min, angle.max);
+    segment.handleOut.angle -= randomFloat(angle.min, angle.max);
+    segment.handleIn.length *= randomFloat(scale.min, scale.max);
+    segment.handleOut.length *= randomFloat(scale.min, scale.max);
   }
 }
