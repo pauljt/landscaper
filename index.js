@@ -14,6 +14,11 @@ let kStageHeight = 50;
 let highTide = kStageHeight + kStageTop;
 let wave = 10;
 
+//scene stage
+let sceneObjects = [];
+let scrollSpeed = 10.0;
+let randomZ = (margin = 0) => randomInt(0, kStageHeight - margin);
+
 const kUnit = kHeight / 60;
 
 const kPenStroke = "#333333";
@@ -51,35 +56,34 @@ function init() {
       // If the item has left the view on the right, move it back
       // to the left:
 
-      const background = new Set(["Sky", "Hills"]);
+      const background = new Set(["Sky", "Hills", "Texture"]);
       if (background.has(item.name)) {
         ///background doesn't need to move
         //TODO: make the texture move (and wrap)
       } else if (item.name == "Water") {
         if (item.bounds.left >= 0) {
-          item.insert(0, new Point(-60, highTide + randomFloat(1.5)));
+          item.insert(
+            0,
+            new Point(-100 * scrollSpeed, highTide + randomFloat(5))
+          );
         }
-        item.position.x += item.z / kStageHeight / 2;
+        item.position.x += (item.z / kStageHeight / 2) * scrollSpeed;
 
         item.segments[item.segments.length - 1].point.x = 0;
       } else {
-        item.position.x += item.z / kStageHeight + 1;
+        item.position.x += (item.z / kStageHeight + 1) * scrollSpeed;
 
-        if (item.name == "Texture") {
-          if (item.bounds.left > 0 && textureCount <= 1) {
-            console.log("copy");
-            let clone = item.clone();
-            clone.scale(-1, 1);
-            clone.position.x = -item.bounds.width / 1.968;
-            clone.name = "Texture";
-            textureCount++;
-          } else if (item.bounds.left > view.size.width) {
+        if (item.bounds.left > view.size.width) {
+          if (item.name == "ManorHouse") {
             item.remove();
-            textureCount++;
-          }
-        } else if (item.bounds.left > view.size.width) {
-          if (item.name == "ManorHouse" || item.name == "ManorHouse") {
-            item.position.x = -item.bounds.width - randomInt(400, 8000);
+            sceneObjects.push(
+              new ManorHouse(randomInt(-200, -1000), randomZ(15))
+            );
+            layoutScene();
+          } else if (item.name == "ManorHouse") {
+            item.remove();
+            sceneObjects.push(new Village(randomInt(-200, -1000), randomZ(15)));
+            layoutScene();
           } else {
             item.position.x = -item.bounds.width;
           }
@@ -103,9 +107,6 @@ function drawScene() {
     field: 1,
     texture: 1,
   };
-
-  let sceneObjects = [];
-  let randomZ = (margin = 0) => randomInt(0, kStageHeight - margin);
 
   if (toggle.sky) sky();
   if (toggle.hills) hills();
@@ -141,11 +142,7 @@ function drawScene() {
     sceneObjects.push(manorHouse);
   }
 
-  //order objects by their z position, and fix overlay order
-  sceneObjects.sort((a, b) => a.z - b.z);
-  sceneObjects.forEach((obj) => {
-    obj.item.bringToFront();
-  });
+  layoutScene();
 
   if (toggle.water) water();
 
@@ -252,7 +249,7 @@ class SceneObject {
   }
 }
 
-class Tree2 extends SceneObject {
+class Tree extends SceneObject {
   constructor(x, z) {
     super(x, z);
     this.item = new Group();
@@ -302,7 +299,7 @@ class Tree2 extends SceneObject {
   }
 }
 
-class Tree extends SceneObject {
+class Tree2 extends SceneObject {
   constructor(x, z) {
     super(x, z);
     this.item = new Group();
@@ -665,4 +662,12 @@ function bendHandles(
     segment.handleIn.length *= randomFloat(scale.min, scale.max);
     segment.handleOut.length *= randomFloat(scale.min, scale.max);
   }
+}
+
+function layoutScene() {
+  //order objects by their z position, and fix overlay order
+  sceneObjects.sort((a, b) => a.z - b.z);
+  sceneObjects.forEach((obj) => {
+    obj.item.bringToFront();
+  });
 }
