@@ -3,7 +3,7 @@
 paper.install(window);
 
 //make Math.random() predictable
-Math.seedrandom("123456782");
+//Math.seedrandom("1345433434");
 const animate = false;
 
 const kHeight = 600;
@@ -16,8 +16,8 @@ let wave = 10;
 
 //scene stage
 let sceneObjects = [];
-let scrollSpeed = 0.5;
-let randomZ = (margin = 0) => randomInt(0, kStageHeight - margin);
+let scrollSpeed = 1.5;
+let randomZ = (margin = 0) => randomFloat(0, kStageHeight - margin);
 let toggle = {
   trees: 1,
   sky: 1,
@@ -28,9 +28,11 @@ let toggle = {
   water: 1,
   field: 1,
   texture: 1,
-  scroll: 0,
+  scroll: 1,
 };
 
+let texture = null;
+let water = null;
 const kUnit = kHeight / 60;
 
 const kPenStroke = "#333333";
@@ -63,10 +65,17 @@ function init() {
 
 function drawScene() {
   if (toggle.sky) sky();
-  if (toggle.hills) hills();
+  if (toggle.hills) Hills();
   if (toggle.trees) {
     for (let x = 0; x <= kWidth; x += 15) {
-      let obj = new Tree2(x, randomZ(15));
+      let obj;
+      switch (randomInt(0, 1)) {
+        case 0:
+          obj = new Tree(x, randomZ());
+        case 1:
+          obj = new Tree2(x, randomZ());
+      }
+
       x += randomFloat(0, obj.width / 2);
       sceneObjects.push(obj);
     }
@@ -88,24 +97,22 @@ function drawScene() {
     }
   }
   if (toggle.village) {
-    let village = new Village(700, randomZ(15));
+    let village = new Village(700, 30);
     sceneObjects.push(village);
   }
   if (toggle.manorHouse) {
-    let manorHouse = new ManorHouse(300, randomZ(15));
+    let manorHouse = new ManorHouse(200, 30);
     sceneObjects.push(manorHouse);
   }
-
-  layoutScene();
-
-  if (toggle.water) water();
-
   if (toggle.texture) {
     let raster = new Raster(view.center);
     raster.source = "./texture.png";
     raster.name = "Texture";
     raster.opacity = 0.3;
+    texture = raster;
   }
+  if (toggle.water) makeWater();
+  layoutScene();
 }
 
 function scroll() {
@@ -131,18 +138,21 @@ function scroll() {
         if (item.name == "ManorHouse") {
           item.remove();
           sceneObjects.push(
-            new ManorHouse(randomInt(-200, -1000), randomZ(15))
+            new ManorHouse(randomInt(-kWidth / 2, -kWidth), randomZ(15))
           );
           layoutScene();
-        } else if (item.name == "ManorHouse") {
+        } else if (item.name == "Village") {
           item.remove();
-          sceneObjects.push(new Village(randomInt(-200, -1000), randomZ(15)));
+          sceneObjects.push(
+            new Village(randomInt(-kWidth / 2, -kWidth), randomZ(15))
+          );
           layoutScene();
         } else {
           item.position.x = -item.bounds.width;
         }
       }
     }
+    layoutScene();
   }
 }
 
@@ -171,7 +181,7 @@ function sky() {
   path.name = "Sky";
 }
 
-function hills() {
+function Hills() {
   let path = new Path.Rectangle({
     point: [0, kStageTop],
     size: [kWidth, kStageHeight + 10],
@@ -180,7 +190,7 @@ function hills() {
   path.name = "Hills";
 }
 
-function water() {
+function makeWater() {
   let left = new Segment({
     point: [0, highTide + randomInt(wave)],
     handleOut: [20, -20],
@@ -205,7 +215,8 @@ function water() {
 
   shore.fillColor = "#6699CC";
   shore.name = "Water";
-  shore.z = kStageTop + kStageHeight - 15; //move the shore at the same speed as the top of the stage
+  shore.z = kStageTop + kStageHeight; //move the shore at the same speed as the top of the stage
+  water = shore;
 }
 
 class SceneObject {
@@ -278,6 +289,7 @@ class Tree extends SceneObject {
       fillColor: leafColor,
     });
     group.addChild(crown.unite());
+    group.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
 
     crown.remove();
     this.item = group;
@@ -323,11 +335,6 @@ class Tree2 extends SceneObject {
 
     group.addChild(folliage);
     group.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
-    group.skew(
-      randomFloat(5),
-      randomFloat(5),
-      new Point(group.bounds.center.x, group.bounds.bottom)
-    );
 
     this.item = group;
   }
@@ -421,7 +428,7 @@ class Field extends SceneObject {
     let width = randomInt(50, 100) * u;
     let path = new Path();
     path.add(x, y);
-    path.curveBy([width / 2, -0.5 * u], [width, 0]);
+    path.curveBy([width / 2, -2 * u], [width, 0]);
     path.fillColor = grassColor;
 
     // add points across the length of the curve
@@ -430,8 +437,8 @@ class Field extends SceneObject {
     //bend the handles of each segment to make the bush
     for (const segment of path.segments) {
       if (segment.index < path.segments.length) {
-        segment.handleIn.angle += randomInt(5, 15);
-        segment.handleOut.angle -= randomInt(5, 15);
+        segment.handleIn.angle += randomInt(2, 5);
+        segment.handleOut.angle -= randomInt(0, 5);
       }
     }
     path.closePath();
@@ -461,7 +468,7 @@ class Bush extends SceneObject {
     //bend the handles of each segment to make the bush
     for (const segment of path.segments) {
       if (segment.index < path.segments.length) {
-        segment.handleIn.angle += randomInt(50, 70);
+        segment.handleIn.angle += randomInt(40, 70);
         segment.handleOut.angle -= randomInt(50, 70);
       }
     }
@@ -651,4 +658,6 @@ function layoutScene() {
   sceneObjects.forEach((obj) => {
     obj.item.bringToFront();
   });
+  water?.bringToFront();
+  texture?.bringToFront();
 }
