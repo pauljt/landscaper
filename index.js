@@ -1,5 +1,12 @@
 //const paper = require("./paper-full");
 
+//todo: split into seperate files:
+/* todo: make stage into an class   
+   - maintain a SORTED sceneObject array
+   - adds insert objects into the correct spot in the heirachy
+   - remove() calls .remove() on the paper object AND removes reference to item (or  maybe make sceneObject.remove() that does that?)
+   */
+
 paper.install(window);
 
 //make Math.random() predictable
