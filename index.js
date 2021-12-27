@@ -197,12 +197,12 @@ function Hills() {
 function makeWater() {
   let left = new Segment({
     point: [0, highTide + randomInt(wave)],
-    handleOut: [20, -20],
+    handleOut: [5, -5],
   });
 
   let right = new Segment({
     point: [kWidth, highTide + randomInt(wave)],
-    handleIn: [20, -20],
+    handleIn: [5, -5],
   });
 
   let shore = new Path(left, right);
@@ -219,7 +219,7 @@ function makeWater() {
 
   shore.fillColor = "#6699CC";
   shore.name = "Water";
-  shore.z = kStageTop + kStageHeight; //move the shore at the same speed as the top of the stage
+  shore.z = kStageHeight; //move the shore at the same speed as the top of the stage
   water = shore;
 }
 
