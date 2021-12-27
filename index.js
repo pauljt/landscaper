@@ -71,9 +71,9 @@ function drawScene() {
       let obj;
       switch (randomInt(0, 1)) {
         case 0:
-          obj = new Tree(x, randomZ());
+          obj = new Tree(x, randomZ(15));
         case 1:
-          obj = new Tree2(x, randomZ());
+          obj = new Tree2(x, randomZ(15));
       }
 
       x += randomFloat(0, obj.width / 2);
@@ -115,6 +115,10 @@ function drawScene() {
   layoutScene();
 }
 
+function move(item) {
+  item.position.x += (item.z / kStageHeight) * scrollSpeed + scrollSpeed;
+}
+
 function scroll() {
   for (var i = 0; i < project.activeLayer.children.length; i++) {
     var item = project.activeLayer.children[i];
@@ -122,17 +126,17 @@ function scroll() {
     if (background.has(item.name)) {
       ///background doesn't need to move
     } else if (item.name == "Water") {
-      if (item.bounds.left >= 0) {
+      if (item.bounds.left >= -10) {
         item.insert(
           0,
           new Point(-100 * scrollSpeed, highTide + randomFloat(5))
         );
       }
-      item.position.x += (item.z / kStageHeight / 2) * scrollSpeed;
-
+      move(item);
+      console.log(item.z);
       item.segments[item.segments.length - 1].point.x = 0;
     } else {
-      item.position.x += (item.z / kStageHeight + 1) * scrollSpeed;
+      move(item);
 
       if (item.bounds.left > view.size.width) {
         if (item.name == "ManorHouse") {
