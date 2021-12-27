@@ -32,7 +32,7 @@ let toggle = {
 };
 
 let texture = null;
-let water = null;
+let water = {};
 const kUnit = kHeight / 60;
 
 const kPenStroke = "#333333";
@@ -69,7 +69,7 @@ function drawScene() {
   if (toggle.trees) {
     for (let x = 0; x <= kWidth; x += 15) {
       let obj;
-      switch (randomInt(0, 1)) {
+      switch (1) {
         case 0:
           obj = new Tree(x, randomZ(15));
         case 1:
@@ -111,7 +111,10 @@ function drawScene() {
     raster.opacity = 0.3;
     texture = raster;
   }
-  if (toggle.water) makeWater();
+  if (toggle.water) {
+    sceneObjects.push(makeWater());
+  }
+
   layoutScene();
 }
 
@@ -120,12 +123,10 @@ function move(item) {
 }
 
 function scroll() {
-  for (var i = 0; i < project.activeLayer.children.length; i++) {
-    var item = project.activeLayer.children[i];
-    const background = new Set(["Sky", "Hills", "Texture"]);
-    if (background.has(item.name)) {
-      ///background doesn't need to move
-    } else if (item.name == "Water") {
+  for (var i = 0; i < sceneObjects.length; i++) {
+    let obj = sceneObjects[i];
+    let item = sceneObjects[i].item;
+    if (item.name == "Water") {
       if (item.bounds.left >= -10) {
         item.insert(
           0,
@@ -140,24 +141,24 @@ function scroll() {
 
       if (item.bounds.left > view.size.width) {
         if (item.name == "ManorHouse") {
+          sceneObjects.splice(i, 1);
           item.remove();
           sceneObjects.push(
             new ManorHouse(randomInt(-kWidth / 2, -kWidth), randomZ(15))
           );
-          layoutScene();
         } else if (item.name == "Village") {
+          sceneObjects.splice(i, 1);
           item.remove();
           sceneObjects.push(
             new Village(randomInt(-kWidth / 2, -kWidth), randomZ(15))
           );
-          layoutScene();
         } else {
           item.position.x = -item.bounds.width;
         }
       }
     }
-    layoutScene();
   }
+  layoutScene();
 }
 
 function sky() {
@@ -220,7 +221,9 @@ function makeWater() {
   shore.fillColor = "#6699CC";
   shore.name = "Water";
   shore.z = kStageHeight; //move the shore at the same speed as the top of the stage
-  water = shore;
+
+  water.item = shore;
+  return water;
 }
 
 class SceneObject {
@@ -287,11 +290,14 @@ class Tree extends SceneObject {
       f.scale(randomFloat(0.5, 0.7));
       folliage.push(f);
     }
+    let original = folliage.pop();
+    original.remove();
 
     var crown = new CompoundPath({
       children: folliage,
       fillColor: leafColor,
     });
+
     group.addChild(crown.unite());
     group.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
 
@@ -326,19 +332,15 @@ class Tree2 extends SceneObject {
       radius: u * 5,
     });
 
-    let folliage2 = new Path.Circle({
-      center: new Point(x, y - u * 6),
-      //sides: randomInt(5, 8),
-      radius: u * 5,
-    });
-
     //splitPath(folliage,7,0.3)
     folliage.fillColor = leafColor;
     folliage.smooth();
+
     bendHandles(folliage, { min: 30, max: 60 }, { min: 1, max: 1.7 });
+    displaceSegments(folliage, u / 2, u / 2);
 
     group.addChild(folliage);
-    group.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
+    group.scale(1 + randomFloat(0.1), 1 + randomFloat(0.1));
 
     this.item = group;
   }
@@ -656,12 +658,19 @@ function bendHandles(
   }
 }
 
+function displaceSegments(path, dx, dy) {
+  for (const segment of path.segments) {
+    segment.point.x += randomFloat(dx);
+    segment.point.y -= randomFloat(dy);
+  }
+}
+
 function layoutScene() {
   //order objects by their z position, and fix overlay order
   sceneObjects.sort((a, b) => a.z - b.z);
   sceneObjects.forEach((obj) => {
     obj.item.bringToFront();
   });
-  water?.bringToFront();
+  water?.item?.bringToFront();
   texture?.bringToFront();
 }
