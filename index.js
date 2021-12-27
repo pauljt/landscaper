@@ -21,12 +21,12 @@ let randomZ = (margin = 0) => randomFloat(0, kStageHeight - margin);
 let toggle = {
   trees: 1,
   sky: 1,
-  hills: 1,
-  bush: 1,
-  village: 1,
-  manorHouse: 1,
-  water: 1,
-  field: 1,
+  hills: 0,
+  bush: 0,
+  village: 0,
+  manorHouse: 0,
+  water: 0,
+  field: 0,
   texture: 1,
   scroll: 1,
 };
@@ -69,11 +69,13 @@ function drawScene() {
   if (toggle.trees) {
     for (let x = 0; x <= kWidth; x += 15) {
       let obj;
-      switch (1) {
+      switch (0) {
         case 0:
           obj = new Tree(x, randomZ(15));
+          break;
         case 1:
           obj = new Tree2(x, randomZ(15));
+          break;
       }
 
       x += randomFloat(0, obj.width / 2);
@@ -115,7 +117,7 @@ function drawScene() {
     sceneObjects.push(makeWater());
   }
 
-  layoutScene();
+  //layoutScene();
 }
 
 function move(item) {
@@ -134,8 +136,9 @@ function scroll() {
         );
       }
       move(item);
-      console.log(item.z);
+
       item.segments[item.segments.length - 1].point.x = 0;
+      sceneObjects.sort((a, b) => a.z - b.z);
     } else {
       move(item);
 
@@ -152,6 +155,7 @@ function scroll() {
           sceneObjects.push(
             new Village(randomInt(-kWidth / 2, -kWidth), randomZ(15))
           );
+          sceneObjects.sort((a, b) => a.z - b.z);
         } else {
           item.position.x = -item.bounds.width;
         }
@@ -264,7 +268,6 @@ class Tree extends SceneObject {
     let y = this.y;
     let leafColor = new Color(treeColors.random());
     leafColor.lightness = (z / kStageHeight) * 0.3 + 0.4;
-    let group = new Group();
 
     let trunk = new Path.Rectangle({
       point: [x, y],
@@ -273,8 +276,6 @@ class Tree extends SceneObject {
     });
 
     trunk.shear([randomFloat(0.05), 0]);
-
-    group.addChild(trunk);
 
     let folliage = [];
     folliage.push(
@@ -290,19 +291,16 @@ class Tree extends SceneObject {
       f.scale(randomFloat(0.5, 0.7));
       folliage.push(f);
     }
-    let original = folliage.pop();
-    original.remove();
 
     var crown = new CompoundPath({
       children: folliage,
       fillColor: leafColor,
     });
 
-    group.addChild(crown.unite());
-    group.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
-
-    crown.remove();
-    this.item = group;
+    this.item.addChild(trunk);
+    this.item.addChild(crown.unite());
+    this.item.scale(1 + randomFloat(0.2), 1 + randomFloat(0.2));
+    crown.remove(); // crown.unite() makes a copy above, remove the original
   }
 }
 
@@ -667,7 +665,7 @@ function displaceSegments(path, dx, dy) {
 
 function layoutScene() {
   //order objects by their z position, and fix overlay order
-  sceneObjects.sort((a, b) => a.z - b.z);
+
   sceneObjects.forEach((obj) => {
     obj.item.bringToFront();
   });
