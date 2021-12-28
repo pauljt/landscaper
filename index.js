@@ -9,6 +9,7 @@ import { Tree, Tree2 } from "./Tree.js";
 import { Village, ManorHouse } from "./Buildings.js";
 import { Water } from "./Water.js";
 import { randomInt, randomFloat, bendHandles } from "./utils.js";
+import { Bush, Field } from "./Scenery.js";
 
 paper.install(window);
 
@@ -31,11 +32,11 @@ const toggle = {
   trees: 1,
   sky: 1,
   hills: 1,
-  bush: 0,
+  bush: 1,
   village: 1,
   manorHouse: 1,
   water: 1,
-  field: 0,
+  field: 1,
   texture: 1,
   scroll: 1,
 };
@@ -133,24 +134,25 @@ function drawScene() {
   if (toggle.bush) {
     for (let x = -kWidth / 2; x <= kWidth; x += 15) {
       let pick = randomInt(0, 100);
-      let obj = new Bush(x, randomZ());
-      x += randomFloat(0, obj.width);
-      sceneObjects.push(obj);
+      let item = new Bush(kUnit);
+      stage.place(item, x, randomZ());
+      x += randomFloat(0, item.bounds.width);
     }
   }
   if (toggle.field) {
     for (let x = -kWidth / 2; x <= kWidth; x += 15) {
       let pick = randomInt(0, 100);
-      let obj = new Field(x, randomZ());
-      x += randomFloat(0, obj.width / 2);
+      let item = new Field(kUnit);
+      stage.place(item, x, randomZ());
+      x += randomFloat(0, item.bounds.width / 2);
     }
   }
   if (toggle.village) {
-    let village = new Village(kWidth / 4, kUnit);
+    let village = new Village(kWidth / 4, kUnit * 0.8);
     stage.place(village, 700, 30);
   }
   if (toggle.manorHouse) {
-    let manorHouse = new ManorHouse(kUnit);
+    let manorHouse = new ManorHouse(kUnit * 0.08);
     stage.place(manorHouse, 200, 30);
   }
 
